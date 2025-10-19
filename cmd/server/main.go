@@ -8,6 +8,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+const httpPort = ":3000"
+
 func main() {
 	// Init new router
 	r := chi.NewRouter()
@@ -23,7 +25,7 @@ func main() {
 	})
 
 	// Start listening at desired port
-	if err := http.ListenAndServe(":3000", r); err != nil {
+	if err := http.ListenAndServe("httpPort", r); err != nil {
 		log.Print(err)
 	}
 }
