@@ -17,7 +17,13 @@
 !README.md
 !LICENSE
 
-# !Makefile
+!docker-compose.yml
+!Dockerfile
+
+!Makefile
+
+!migrations/
+!migrations/*.sql
 
 # ...even if they are in subdirectories
 !*/
