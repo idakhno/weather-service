@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS reading (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    temperature DOUBLE PRECISION NOT NULL,
+    timestamp TIMESTAMP NOT NULL
+);
