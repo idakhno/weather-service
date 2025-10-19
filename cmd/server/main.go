@@ -15,6 +15,9 @@ import (
 // Server constants
 const httpPort = ":3000"
 
+// Handler constants
+const handlerCity = "city"
+
 func main() {
 	// Init new router
 	r := chi.NewRouter()
@@ -23,7 +26,10 @@ func main() {
 	r.Use(middleware.Logger)
 
 	// Init handlers
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/{city}", func(w http.ResponseWriter, r *http.Request) {
+		city := chi.URLParam(r, handlerCity)
+		fmt.Printf("Requested city: %s\n", city)
+
 		if _, err := w.Write([]byte("welcome")); err != nil {
 			log.Print(err)
 		}
