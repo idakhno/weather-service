@@ -28,6 +28,8 @@ func (h *Handler) GetWeather(w http.ResponseWriter, r *http.Request) {
 
 	weather, err := h.svc.GetLatestWeather(r.Context(), city)
 	if err != nil {
+		// Return 404 for any error (not found, database error, etc.)
+		// In production, consider distinguishing between error types
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}

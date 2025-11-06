@@ -20,6 +20,8 @@ func NewWeatherRepo(db *pgxpool.Pool) WeatherRepository {
 	return &weatherRepo{db: db}
 }
 
+// Save inserts a new weather reading. Each call creates a new record,
+// allowing historical tracking of temperature changes over time.
 func (r *weatherRepo) Save(ctx context.Context, city string, w domain.Weather) error {
 	_, err := r.db.Exec(ctx,
 		`insert into reading (name, temperature, timestamp) values ($1, $2, $3)`,
@@ -28,6 +30,8 @@ func (r *weatherRepo) Save(ctx context.Context, city string, w domain.Weather) e
 	return err
 }
 
+// GetLatest retrieves the most recent weather reading for the given city.
+// Results are ordered by timestamp descending to get the latest entry first.
 func (r *weatherRepo) GetLatest(ctx context.Context, city string) (domain.Weather, error) {
 	var w domain.Weather
 	err := r.db.QueryRow(ctx,
