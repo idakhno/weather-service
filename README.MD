@@ -1,67 +1,64 @@
 # Weather Service
 
-Сервис для получения текущей температуры по названию города, написанный на Go. Использует [Open-Meteo API](https://open-meteo.com/) для получения данных о погоде.
+A Go service that retrieves current temperature by city name using the [Open-Meteo API](https://open-meteo.com/).
 
-## Описание
+## Overview
 
-Weather Service — это HTTP-сервис, который:
-- Автоматически обновляет данные о температуре для указанных городов через заданные интервалы
-- Сохраняет историю измерений в PostgreSQL
-- Предоставляет REST API для получения последних данных о температуре
+Weather Service is an HTTP service that periodically fetches weather data from Open-Meteo API, stores historical readings in PostgreSQL, and provides a REST API to query the latest temperature for any city.
 
-## Возможности
+## Features
 
-- 🌡️ Получение текущей температуры по названию города
-- 🔄 Автоматическое обновление данных каждые 10 секунд
-- 💾 Хранение истории измерений в PostgreSQL
-- 🌍 Поддержка любого города через Open-Meteo Geocoding API
+- Retrieve current temperature by city name
+- Automatic periodic updates (configurable interval)
+- Historical data storage in PostgreSQL
+- Support for any city via Open-Meteo Geocoding API
 
-## Требования
+## Requirements
 
-- Go 1.25.1 или выше
-- Docker и Docker Compose (для запуска PostgreSQL)
-- Доступ к интернету (для работы с Open-Meteo API)
+- Go 1.25.1 or higher
+- Docker and Docker Compose
+- Internet access for Open-Meteo API
 
-## Быстрый старт
+## Quick Start
 
-### 1. Клонирование репозитория
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/weather-service.git
+git clone https://github.com/idakhno/weather-service.git
 cd weather-service
 ```
 
-### 2. Запуск базы данных
+### 2. Start the database
 
-Запустите PostgreSQL с помощью Docker Compose. Это автоматически создаст базу данных `weather` и применит миграции:
+Start PostgreSQL using Docker Compose. This will automatically create the `weather` database and apply migrations:
 
 ```bash
 docker compose up -d
 ```
 
-Проверьте, что контейнер запущен:
+Verify the container is running:
 
 ```bash
 docker ps
 ```
 
-### 3. Запуск сервиса
+### 3. Run the service
 
 ```bash
 go run cmd/server/main.go
 ```
 
-Сервис запустится на порту `3000` и начнёт автоматически обновлять данные о температуре для Москвы каждые 10 секунд.
+The service starts on port `3000` and begins automatically updating temperature data for Moscow every 10 seconds.
 
-### 4. Проверка работы
+### 4. Verify
 
-Откройте новый терминал и выполните запрос:
+In a new terminal, make a request:
 
 ```bash
 curl http://localhost:3000/moscow
 ```
 
-Пример ответа:
+Example response:
 
 ```json
 {
@@ -70,25 +67,25 @@ curl http://localhost:3000/moscow
 }
 ```
 
-**Примечание:** Если данных пока нет, подождите несколько секунд — фоновая задача обновляет температуру каждые 10 секунд.
+Note: If no data is available yet, wait a few seconds as the background task updates temperature every 10 seconds.
 
-## Использование API
+## API Usage
 
-### Получение температуры
+### Get Temperature
 
-**Запрос:**
+**Request:**
 ```bash
 GET /{city}
 ```
 
-**Пример:**
+**Examples:**
 ```bash
 curl http://localhost:3000/moscow
 curl http://localhost:3000/saint-petersburg
-curl http://localhost:3000/новосибирск
+curl http://localhost:3000/novosibirsk
 ```
 
-**Ответ (200 OK):**
+**Response (200 OK):**
 ```json
 {
   "Time": "2024-01-15T14:30:00Z",
@@ -96,92 +93,61 @@ curl http://localhost:3000/новосибирск
 }
 ```
 
-**Ответ (404 Not Found):**
+**Response (404 Not Found):**
 ```
 not found
 ```
 
-## Архитектура
+## Configuration
 
-Проект следует принципам чистой архитектуры:
+Current settings are hardcoded in `cmd/server/main.go`:
 
-```
-cmd/server/          # Точка входа приложения
-internal/
-  domain/            # Доменные модели
-  service/            # Бизнес-логика
-  infrastructure/    # Внешние зависимости (БД, HTTP-клиенты, планировщик)
-    clients/
-      openmeteo/     # Клиент для Open-Meteo API
-    repository/
-      postgres/      # Репозиторий для работы с PostgreSQL
-    scheduler/       # Планировщик задач
-  transport/
-    httpapi/         # HTTP-обработчики и маршруты
-migrations/          # SQL-миграции для базы данных
-```
+- **Server port:** `3000`
+- **Database:** `postgresql://postgres:postgres@localhost:5432/weather`
+- **Update interval:** `10 seconds`
+- **Default city:** `moscow`
 
-## Конфигурация
+For production, these should be moved to environment variables or a configuration file.
 
-В текущей версии настройки захардкожены в `cmd/server/main.go`:
+## Database Schema
 
-- **Порт сервера:** `3000`
-- **База данных:** `postgresql://postgres:postgres@localhost:5432/weather`
-- **Интервал обновления:** `10 секунд`
-- **Город по умолчанию:** `moscow`
-
-Для продакшена рекомендуется вынести эти настройки в переменные окружения или конфигурационный файл.
-
-## Структура базы данных
-
-Таблица `reading` хранит историю измерений:
+The `reading` table stores historical weather measurements:
 
 ```sql
 CREATE TABLE reading (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,           -- Название города
-    temperature DOUBLE PRECISION NOT NULL,  -- Температура в градусах Цельсия
-    timestamp TIMESTAMP NOT NULL   -- Время измерения
+    name TEXT NOT NULL,
+    temperature DOUBLE PRECISION NOT NULL,
+    timestamp TIMESTAMP NOT NULL
 );
 ```
 
-## Разработка
+## Development
 
-### Зависимости
-
-Установите зависимости:
+### Install dependencies
 
 ```bash
 go mod download
 ```
 
-### Запуск тестов
+### Run tests
 
 ```bash
 go test ./...
 ```
 
-### Остановка базы данных
+### Stop the database
 
 ```bash
 docker compose down
 ```
 
-Для полной очистки данных:
+To remove all data:
 
 ```bash
 docker compose down -v
 ```
 
-## Исправленные ошибки
-
-В проекте были исправлены следующие проблемы:
-
-1. ✅ Добавлена проверка ошибки подключения к базе данных
-2. ✅ Исправлена обработка ошибок при создании планировщика
-3. ✅ Добавлено правильное URL-кодирование названий городов
-4. ✅ Улучшен парсинг времени с поддержкой различных форматов ISO 8601
-
-## Лицензия
+## License
 
 MIT © 2025
