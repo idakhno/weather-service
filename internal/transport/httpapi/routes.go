@@ -10,6 +10,7 @@ func RegisterRoutes(r *chi.Mux, svc *service.WeatherService) {
 	h := NewHandler(svc)
 
 	r.Route("/", func(r chi.Router) {
+		// GET /{city} returns the latest weather reading for the specified city
 		r.Get("/{city}", h.GetWeather)
 	})
 }

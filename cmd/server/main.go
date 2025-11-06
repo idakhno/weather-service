@@ -17,9 +17,15 @@ import (
 )
 
 func main() {
+	// Background context is used for long-running operations that should not be cancelled
 	ctx := context.Background()
 
 	db, err := pgxpool.New(ctx, "postgresql://postgres:postgres@localhost:5432/weather")
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 	openMeteo := httpclient.NewClient(httpClient)
 	repo := postgres.NewWeatherRepo(db)
@@ -29,16 +35,21 @@ func main() {
 	r.Use(middleware.Logger)
 	httpapi.RegisterRoutes(r, serviceInit)
 
-	schedulerCron, _ := scheduler.New()
+	schedulerCron, err := scheduler.New()
+	if err != nil {
+		log.Fatalf("failed to create scheduler: %v", err)
+	}
+
 	err = schedulerCron.Every(10*time.Second, func() {
 		if err := serviceInit.UpdateWeather(ctx, "moscow"); err != nil {
 			log.Println(err)
 		}
 	})
 	if err != nil {
-		return
+		log.Fatalf("failed to schedule weather update: %v", err)
 	}
 
+	// Start HTTP server in a separate goroutine to allow scheduler to run concurrently
 	go func() {
 		err := http.ListenAndServe(":3000", r)
 		if err != nil {
@@ -46,5 +57,6 @@ func main() {
 		}
 	}()
 	schedulerCron.Start()
+	// Block forever to keep the application running
 	select {}
 }
